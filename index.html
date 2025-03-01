@@ -8,15 +8,18 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f7e7ce;
+            background-image: url('treasure_map_background.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #fff;
         }
         .container {
             max-width: 600px;
             margin: auto;
             padding: 20px;
-            background: white;
+            background: rgba(0, 0, 0, 0.7);
             border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            box-shadow: 0px 0px 10px rgba(255,255,255,0.3);
         }
         .hidden {
             display: none;
@@ -30,10 +33,14 @@
             cursor: pointer;
             border-radius: 10px;
         }
+        .game-area {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <img src="brodys_logo.png" alt="Brody's Buried Treasure" width="200">
         <h1>Welcome to Brody's Buried Treasure!</h1>
         <p>Choose your adventure:</p>
         <select id="theme">
@@ -51,6 +58,11 @@
             <button onclick="checkAnswer()">Submit</button>
         </div>
 
+        <div id="gameSection" class="hidden game-area">
+            <h2>Mini-Game: Pop the Bubbles!</h2>
+            <canvas id="bubbleGame" width="400" height="200" style="background: lightblue;"></canvas>
+        </div>
+
         <div id="prizeSection" class="hidden">
             <h2>Scratch to Reveal Your Prize!</h2>
             <div class="scratch-off" onclick="revealPrize()" id="prizeBox">Scratch Here</div>
@@ -61,6 +73,9 @@
     <script>
         let selectedTheme = "";
         let correctAnswer = "";
+        let canvas = document.getElementById("bubbleGame");
+        let ctx = canvas.getContext("2d");
+        let bubbles = [];
 
         function startHunt() {
             selectedTheme = document.getElementById("theme").value;
@@ -85,11 +100,45 @@
             let userAnswer = document.getElementById("riddleAnswer").value;
             if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
                 alert("Correct! You found the treasure!");
-                document.getElementById("prizeSection").classList.remove("hidden");
+                document.getElementById("gameSection").classList.remove("hidden");
+                startBubbleGame();
             } else {
                 alert("Try again!");
             }
         }
+
+        function startBubbleGame() {
+            for (let i = 0; i < 10; i++) {
+                bubbles.push({ x: Math.random() * 400, y: Math.random() * 200, radius: 20 });
+            }
+            drawBubbles();
+        }
+
+        function drawBubbles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            bubbles.forEach((bubble, index) => {
+                ctx.beginPath();
+                ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "white";
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        canvas.addEventListener("click", function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            bubbles = bubbles.filter(bubble => {
+                const distance = Math.sqrt((bubble.x - x) ** 2 + (bubble.y - y) ** 2);
+                return distance > bubble.radius;
+            });
+            drawBubbles();
+            if (bubbles.length === 0) {
+                alert("You won the game! Proceeding to the final prize!");
+                document.getElementById("prizeSection").classList.remove("hidden");
+            }
+        });
 
         function revealPrize() {
             let prize = Math.random() < 0.1 ? "Mystery Treasure" : "Sticker Pack";
